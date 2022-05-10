@@ -2,17 +2,20 @@
 /* See cxx source for full Copyright notice */
 /* $Id$ */
 
-// Definition of prototypes of all methods that are to be implemented in the ALICE Run 3 analysis script
+// Definition of prototypes of all methods that are to be implemented in the ALICE Run 2 analysis script
 
 #ifndef AliAnalysisTaskMyTask_H // include guard (to avoid double inclusion)
 #define AliAnalysisTaskMyTask_H
 
 #include "AliAnalysisTaskSE.h"
+#include "AliPIDResponse.h"
+
+class AliPIDResponce;
+class AliMultSelectionTask;
 
 class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 
 	/* derived from the AliAnalysisTask class for Single Events*/
-
 	public:
 
 		// two constructors
@@ -31,8 +34,6 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		// Called at the end of an analysis task
 		virtual void Terminate(Option_t *option);
 
-		
-
 	private:
 
 		/*Adding class members; the !<! tags are to be attached to ALL RUN-TIME
@@ -48,9 +49,11 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		ClassDef(AliAnalysisTaskMyTask, 1); // the number must be changed after ANY class modification
 		/// \endcond
 
-		AliAODEvent *fAOD; //!<! input event
-		TList *fOutputList; //!<!
-		TH1F *fHistPt; //!<!
-
+		AliAODEvent *fAOD; //! input event
+		TList *fOutputList; //!
+		TH1F *fHistPt; //!
+		TH1F *fPV0ZPos; //!
+		AliPIDResponse *fPIDResponse; //!
+		TH1F *fNsigProton; //!
 };
 #endif

@@ -13,7 +13,7 @@
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
 
-// Implementation of methods that are to needed for the ALICE Run 3 analysis script
+// Implementation of methods that are to needed for the ALICE Run 2 analysis script
 
 #include "AliAnalysisTask.h"
 #include "AliAnalysisManager.h"
@@ -25,13 +25,16 @@
 #include "TChain.h"
 #include "TList.h"
 #include "TH1F.h"
+#include "AliPID.h"
 
-AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(): AliAnalysisTaskSE(), fAOD(0), fOutputList(0), fHistPt(0) {
+AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(): AliAnalysisTaskSE(), fAOD(0), fOutputList(0), fHistPt(0), 
+fPV0ZPos(0), fPIDResponse(0), fNsigProton(0) {
 
 	// ROOT I/O constructor, no memory allocation
 }
 
-AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char *name): AliAnalysisTaskSE(name), fAOD(0), fOutputList(0), fHistPt(0) {
+AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char *name): AliAnalysisTaskSE(name), fAOD(0), fOutputList(0),
+fHistPt(0), fPV0ZPos(0), fPIDResponse(0), fNsigProton(0) {
 
 	DefineInput(0, TChain::Class());
 	DefineOutput(1, TList::Class());
@@ -47,8 +50,13 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects() {
 	fOutputList = new TList(); // list of all histograms to be written to output files
 	fOutputList->SetOwner(kTRUE); // memory handling delegated to the TList class, no 'delete' statements required 
 
-	fHistPt = new TH1F("fHistPt", "fHistPt", 100, 0, 100);
+	fHistPt = new TH1F("fHistPt", "fHistPt", 100, 0, 6);
+	fPV0ZPos = new TH1F("fPV0ZPos", "fHistPt", 100, -10, 10);
+	fNsigProton = new TH1F("fNsigProton", "fNsigProton", 100, 0, 3);
+
 	fOutputList->Add(fHistPt); // DO NOT FORGET TO ADD OBJECTS TO THE LIST!!!
+	fOutputList->Add(fPV0ZPos);
+	fOutputList->Add(fNsigProton);
 
 	PostData(1, fOutputList); // add the TList to the output file
 }
@@ -56,16 +64,25 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects() {
 void AliAnalysisTaskMyTask::UserExec(Option_t *option) {
 
 	fAOD = dynamic_cast<AliAODEvent*>(InputEvent());
-
 	if (!fAOD) return;
-
 	int iTracks = fAOD->GetNumberOfTracks();
+
+	AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
+	if (!mgr || !mgr->GetInputEventHandler()) return;
 
 	for (int i = 0; i < iTracks; ++i) {
 
-		AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
+		AliAODTrack *track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
+		Double_t vertexZ = fAOD->GetPrimaryVertex()->GetZ();
+		AliPIDResponse *fPIDResponse = mgr->GetInputEventHandler()->GetPIDResponse();
+
 		if (!track || !track->TestFilterBit(1)) continue; // 1 stands for minimum bias trigger
+		if ((vertexZ < -10) || (vertexZ > 10)) continue; // to exclude events far from the detector center
+		if (std::abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton)) > 3) continue;
+
 		fHistPt->Fill(track->Pt());
+		fPV0ZPos->Fill(vertexZ);
+		fNsigProton->Fill(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton));
 	}
 
 	PostData(1, fOutputList);

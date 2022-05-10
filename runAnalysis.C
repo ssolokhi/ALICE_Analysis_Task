@@ -1,10 +1,10 @@
-/* Steering macros for the data analysis
+/* Steering macros for the data analysis - works with CLING & ROOT6
 
 Run with 'aliroot runAnalysis.C' 4 times:
 
-- The first time: set gridTest = kTRUE to run test analysis by simulating GRID
+- The first time: set gridTest = true to run test analysis by simulating GRID
 
-- The second time: set gridTest = kFALSE to run task on GRID
+- The second time: set gridTest = false to run task on GRID
 
 - The third time: SetRunMode("terminate")
 
@@ -20,31 +20,22 @@ Run with 'aliroot runAnalysis.C' 4 times:
 void runAnalysis() {
 
 	Bool_t localRun = true;
-
+	
 	Bool_t gridTest = true;
 
-//The following lines are used to determine the version of ROOT (5 or 6) compiler ot use
-#if !defined (__CINT__) || !defined (__CLING__) // CLING and CINT are the (new and old respectively) ROOT C++ Interpreter
 	gInterpreter->ProcessLine(".include $ROOTSYS/include");
 	gInterpreter->ProcessLine(".include $ALICE_ROOT/include");
-#else
-	gROOT->ProcessLine(".include $ROOTSYS/include");
-	gROOT->ProcessLine(".include $ALICE_ROOT/include");
-#endif
-
-	AliAnalysisManager *mgr = new AliAnalysisManager("AnalysisMyTask");
+	
+	AliAnalysisManager *mgr = new AliAnalysisManager("MyTask");
 	AliAODInputHandler *aodHandler = new AliAODInputHandler();
 	mgr->SetInputEventHandler(aodHandler);
 
-//The following lines are used to determine the version of ROOT (5 or 6) compiler ot use
-#if !defined (__CINT__) || !defined (__CLING__)
+	// Lines to load the TPC parameters
+	TMacro PIDadd(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"));
+	AliAnalysisTaskPIDResponse *PIDResponceTask = reinterpret_cast<AliAnalysisTaskPIDResponse*>(PIDadd.Exec());
+
 	gInterpreter->LoadMacro("AliAnalysisTaskMyTask.cxx++g"); // 'g' flag for debugging 
 	AliAnalysisTaskMyTask *task = reinterpret_cast<AliAnalysisTaskMyTask*>(gInterpreter->ExecuteMacro("AddMyTask.C"));
-#else
-	gROOT->LoadMacro("AliAnalysisTaskMyTask.cxx++g");
-	gROOT->LoadMacro("AddMyTask.C");
-	AliAnalysisTaskMyTask *task = AddMyTask();
-#endif
 
 	if (!mgr->InitAnalysis()) return 0x0;
 	mgr->SetDebugLevel(0);
@@ -71,6 +62,16 @@ void runAnalysis() {
 		alienHandler->SetRunPrefix("000"); // 000 for real data, nothing for MC data
 
 		alienHandler->AddRunNumber(256504);
+		alienHandler->AddRunNumber(256506);
+		alienHandler->AddRunNumber(256510);
+		alienHandler->AddRunNumber(256514);
+		alienHandler->AddRunNumber(256554);
+
+		alienHandler->AddRunNumber(256556);
+		alienHandler->AddRunNumber(256557);
+		alienHandler->AddRunNumber(256561);
+		alienHandler->AddRunNumber(256562);
+		alienHandler->AddRunNumber(256565);
 
 		alienHandler->SetSplitMaxInputFileNumber(30);
 		alienHandler->SetExecutable("myTask.sh");
@@ -97,6 +98,5 @@ void runAnalysis() {
 			//alienHandler->SetRunMode("terminate"); // for output file merging
 			mgr->StartAnalysis("grid");
 		}
-
 	}
 }

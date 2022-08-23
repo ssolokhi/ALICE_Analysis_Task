@@ -49,11 +49,12 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		ClassDef(AliAnalysisTaskMyTask, 1); // the number must be changed after ANY class modification
 		/// \endcond
 
-		AliAODEvent *fAOD; //! input event
-		TList *fOutputList; //!
-		TH1F *fHistPt; //!
-		TH1F *fPV0ZPos; //!
-		AliPIDResponse *fPIDResponse; //!
-		TH1F *fNsigProton; //!
+		AliAODEvent *fAOD; //!<! input event
+		TList *fOutputList; //!<!
+		TH1F *fHistPt; //!<!
+		TH1F *fPV0ZPos; //!<!
+		AliPIDResponse *fPIDResponse; //!<!
+		TH2F *fTPCResponse; //!<!
+		TH1F *fNsigProton; //!<!
 };
 #endif

@@ -6,7 +6,7 @@
 
 The following code presents an example of data analysis macros used for ALICE Run 2 data. A future modification might include usage of the O<sup>2</sup> (Online-Offline) ALICE system. 
 
-Current version of the code is used to analyse ALICE 2016 (run K) data. The code only saves events that have passed the Minimum bias trigger. For these events, the transverse momentum (p<sub>T</sub>), the primary vertex Z coordinate (z<sub>V0</sub>), and the number of standart deviations from the TPC proton responce (N<sub>$\sigma$</sub>) are extracted. The following cuts are applied:
+Current version of the code is used to analyse ALICE 2016 (run K) data. The code only saves events that have passed the Minimum bias trigger. For these events, the transverse momentum (p<sub>T</sub>), the primary vertex Z coordinate (z<sub>V0</sub>), the centrality, and the number of standart deviations from the TPC proton responce (N<sub>$\sigma$</sub>) are extracted. The following cuts are applied:
 
 - -10 cm < z<sub>V0</sub> < 10 cm;
 

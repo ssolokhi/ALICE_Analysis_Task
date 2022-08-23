@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# ROOT-Specific Files
+*.root
+*.xml
+*.pcm
+*.in

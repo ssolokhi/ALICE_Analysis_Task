@@ -18,23 +18,30 @@
 #include "AliAnalysisTask.h"
 #include "AliAnalysisManager.h"
 #include "AliAODEvent.h"
+#include "AliAODVertex.h"
 #include "AliAODInputHandler.h"
 #include "AliMultSelection.h"
+#include "TChain.h"
+#include "TList.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "AliPID.h"
+#include "TClonesArray.h"
+#include "AliAODMCParticle.h"
 
 #include "AliAnalysisTaskMyTask.h"
 
-#include "TChain.h"
-#include "TList.h"
-#include "TH1F.h"
-#include "AliPID.h"
-
-AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(): AliAnalysisTaskSE(), fAOD(0), fOutputList(0), fHistPt(0), 
-fPV0ZPos(0), fPIDResponse(0), fNsigProton(0), fTPCResponse(0) {
-	// ROOT I/O constructor, no memory allocation
+AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(): AliAnalysisTaskSE(), fAOD(nullptr), 
+fAODv0(nullptr), fOutputList(nullptr), fPIDResponse(nullptr), fMCEvent(nullptr),
+fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
+fTPCResponse(nullptr), fProtonResponse(nullptr), fThetaVsEta(nullptr) {
+	// Default ROOT I/O constructor, no memory allocation
 }
 
-AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char *name): AliAnalysisTaskSE(name), fAOD(0), fOutputList(0),
-fHistPt(0), fPV0ZPos(0), fPIDResponse(0), fNsigProton(0), fTPCResponse(0) {
+AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char *name): AliAnalysisTaskSE(name), fAOD(nullptr), 
+fAODv0(nullptr), fOutputList(nullptr), fPIDResponse(nullptr), fMCEvent(nullptr),
+fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
+fTPCResponse(nullptr), fProtonResponse(nullptr), fThetaVsEta(nullptr) {
 	DefineInput(0, TChain::Class());
 	DefineOutput(1, TList::Class());
 }
@@ -47,46 +54,78 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects() {
 	fOutputList = new TList(); // list of all histograms to be written to output files
 	fOutputList->SetOwner(kTRUE); // memory handling delegated to the TList class, no 'delete' statements required 
 
-	fHistPt = new TH1F("fHistPt", "Transverse Momentum", 100, 0, 6);
-	fPV0ZPos = new TH1F("fPV0ZPos", "Vertex Z-Coordinate", 100, -10, 10);
-	fNsigProton = new TH1F("fNsigProton", "Proton Signal", 100, 0, 3);
-	fTPCResponse = new TH2F("fTPCResponse", "TPC Response", 100, 0, 5, 500, 0, 500);
+	fZvertex = new TH1D("hZvertex", "Vertex Z-Coordinate;z_{vertex} [cm];N_{entries}", 100, -20, 20);
+	fOutputList->Add(fZvertex);
 
-	fOutputList->Add(fHistPt); // DO NOT FORGET TO ADD OBJECTS TO THE LIST!!!
-	fOutputList->Add(fPV0ZPos);
-	fOutputList->Add(fNsigProton);
+	fMCPDGCode = new TH1D("hMCPDGCode", "MC Particle Particle Data Group Code;PDG Code;N_{entries}", 1000, 0, 3500);
+	fOutputList->Add(fMCPDGCode);
+ 	
+	fTPCResponse = new TH2D("hTPCResponse", "TPC Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, 0, 5, 500, 0, 500);
 	fOutputList->Add(fTPCResponse);
+
+	fProtonResponse = new TH2D("hProtonResponse", "TPC Proton Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, 0, 5, 500, 0, 500);
+	fOutputList->Add(fProtonResponse);
+
+	fTrackPtvsMass = new TH2D("hTrackPtvsMass", "Track Transverse Momentum vs. Mass;M [GeV/c^{2}]; p_{T} [GeV/c]", 100, 0, 5, 100, 0, 10);
+	fOutputList->Add(fTrackPtvsMass);
+
+	fThetaVsEta = new TH2D("hThetaVsEta", "Particle Azimutal Angle vs. Pseudorapidity;#phi;#eta", 250, 0, TMath::Pi(), 250, -5, 5);
+	fOutputList->Add(fThetaVsEta);
 
 	PostData(1, fOutputList); // add the TList to the output file
 }
 
 void AliAnalysisTaskMyTask::UserExec(Option_t *option) {
-	fAOD = dynamic_cast<AliAODEvent*>(InputEvent());
+	fAOD = static_cast<AliAODEvent*>(InputEvent()); 
 	if (!fAOD) return;
-	int iTracks = fAOD->GetNumberOfTracks();
+
+	if (fAOD->IsPileupFromSPD()) return; // reject pile-up of consequtive events
 
 	AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
 	if (!mgr || !mgr->GetInputEventHandler()) return;
+
 	AliPIDResponse *fPIDResponse = mgr->GetInputEventHandler()->GetPIDResponse();
 	if (!fPIDResponse) return;
+
+	double vertexZ = fAOD->GetPrimaryVertex()->GetZ();
+	fZvertex->Fill(vertexZ);
+	if (TMath::Abs(vertexZ) > fZvertexCut) return;; // to exclude events far from the detector center
+
 	AliMultSelection *multSelection =static_cast<AliMultSelection*>(fAOD->FindListObject("MultSelection"));
 	if (!multSelection) return;
 	double centralityV0M = multSelection->GetMultiplicityPercentile("V0M");
 
-	for (int i = 0; i < iTracks; ++i) {
-		AliAODTrack *track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
-		double vertexZ = fAOD->GetPrimaryVertex()->GetZ();
+	int nTracks = fAOD->GetNumberOfTracks();
+	for (int i = 0; i < nTracks; ++i) {
+		AliAODTrack *track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));		
+		if (!track || !track->TestFilterBit(1)) continue; // 1 stands for minimum bias trigger
+
+		fTrackPtvsMass->Fill(track->M(), track->Pt());
+		fThetaVsEta->Fill(track->Theta(), track->Eta());
+
 		fTPCResponse->Fill(track->P(), track->GetTPCsignal());
 
-		if (!track || !track->TestFilterBit(1)) continue; // 1 stands for minimum bias trigger
-		if ((vertexZ < -10) || (vertexZ > 10)) continue; // to exclude events far from the detector center
-		if (std::abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton)) > 3) continue;
-
-		fHistPt->Fill(track->Pt());
-		fPV0ZPos->Fill(vertexZ);
-		fNsigProton->Fill(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton));
+		// available particle respones: kElectron, kProton, kPion, kKaon, kMoun, kTriton, kHe3
+		double protonSignal = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
+		if (protonSignal < fProtonSigmaCut) fProtonResponse->Fill(track->P(), track->GetTPCsignal());
 	}
+
+	fMCEvent = MCEvent();
+	if (fMCEvent) ProcessMCParticles();
+
 	PostData(1, fOutputList);
+}
+
+void AliAnalysisTaskMyTask::ProcessMCParticles() {
+	TClonesArray *fMCParticlesArray = dynamic_cast<TClonesArray*>(fAOD->FindListObject(AliAODMCParticle::StdBranchName()));
+	if (!fMCParticlesArray) return;
+
+	int nMCtracks = fMCParticlesArray->GetEntriesFast();
+	for (int i = 0; i < nMCtracks; ++i) {
+		AliAODMCParticle *MCtrack = static_cast<AliAODMCParticle*>(fMCParticlesArray->At(i));
+		if (!MCtrack) continue;
+		fMCPDGCode->Fill(MCtrack->GetPdgCode());
+	}
 }
 
 void AliAnalysisTaskMyTask::Terminate(Option_t *option) {}

@@ -26,7 +26,7 @@ void runAnalysis() {
 
 	// Load the TPC parameters
 	TMacro PIDadd(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"));
-	AliAnalysisTaskPIDResponse *PIDResponceTask = reinterpret_cast<AliAnalysisTaskPIDResponse*>(PIDadd.Exec());
+	AliAnalysisTaskPIDResponse *PIDResponseTask = reinterpret_cast<AliAnalysisTaskPIDResponse*>(PIDadd.Exec());
 
 	// Load Multiplicity calculation
 	TMacro multSelection(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C"));

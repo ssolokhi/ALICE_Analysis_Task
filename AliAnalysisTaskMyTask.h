@@ -9,15 +9,14 @@
 
 #include "AliAnalysisTaskSE.h"
 #include "AliPIDResponse.h"
+#include "AliMCEvent.h"
 
 class AliPIDResponce;
 class AliMultSelectionTask;
 
 class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
-
 	/* derived from the AliAnalysisTask class for Single Events*/
 	public:
-
 		// two constructors
 		AliAnalysisTaskMyTask();
 		AliAnalysisTaskMyTask(const char *name);
@@ -31,12 +30,14 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		// To be called for EACH event that passed the trigger
 		virtual void UserExec(Option_t *option);
 
+		// function treating Monte-Carlo generated particles
+		void ProcessMCParticles(); 
+
 		// Called at the end of an analysis task
 		virtual void Terminate(Option_t *option);
 
 	private:
-
-		/*Adding class members; the !<! tags are to be attached to ALL RUN-TIME
+		/*Adding class members; the //! tags are to be attached to ALL RUN-TIME
 		 RESOLVED members for ROOT to generate documentation correctly*/
 
 		AliAnalysisTaskMyTask(const AliAnalysisTaskMyTask&); //copy constructor, not implemented
@@ -46,15 +47,24 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		The '\cond' tags are for generating proper documentation */
 
 		/// \cond CLASSDEF
-		ClassDef(AliAnalysisTaskMyTask, 1); // the number must be changed after ANY class modification
+		ClassDef(AliAnalysisTaskMyTask, 1);
 		/// \endcond
 
-		AliAODEvent *fAOD; //!<! input event
-		TList *fOutputList; //!<!
-		TH1F *fHistPt; //!<!
-		TH1F *fPV0ZPos; //!<!
-		AliPIDResponse *fPIDResponse; //!<!
-		TH2F *fTPCResponse; //!<!
-		TH1F *fNsigProton; //!<!
+		AliAODEvent *fAOD; //! input event
+		TList *fOutputList; //! List of output histograms
+		AliAODVertex *fAODv0; //! primary vertex
+		AliPIDResponse *fPIDResponse; //! particle identification response
+		AliMCEvent *fMCEvent; //! Monte-Carlo event flag
+
+		TH1D *fZvertex; //! Vertex z-coordinate 
+		TH1D *fMCPDGCode; //! Monte-Carlo generated particles' PDG code
+
+		TH2D *fTPCResponse; //! TPC response 
+		TH2D *fProtonResponse; //! Pion TPC response 
+		TH2D *fTrackPtvsMass; //! Event transverse momentum
+		TH2D *fThetaVsEta; //! particle azimutal angle vs. pseudorapidity
+
+		const double fZvertexCut = 10; //! maximum primary vertex Z-coordinate [cm]
+		const double fProtonSigmaCut = 1; //! maximum number of standard deviations from proton signal in TPC
 };
 #endif

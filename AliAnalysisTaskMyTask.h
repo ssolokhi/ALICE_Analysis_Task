@@ -60,9 +60,14 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		TH1D *fMCPDGCode; //! Monte-Carlo generated particles' PDG code
 
 		TH2D *fTPCResponse; //! TPC response 
+		TH2D *fTOFResponse; //! TPC response 
+		TH2D *fITSResponse; //! TPC response 
+		TH2D *fTRDResponse; //! TPC response 
+
 		TH2D *fProtonResponse; //! Pion TPC response 
 		TH2D *fTrackPtvsMass; //! Event transverse momentum
 		TH2D *fThetaVsEta; //! particle azimutal angle vs. pseudorapidity
+		TH2D *fThetaVsPhi; //! particle azimutal angle vs. polar angle
 
 		const double fZvertexCut = 10; //! maximum primary vertex Z-coordinate [cm]
 		const double fProtonSigmaCut = 1; //! maximum number of standard deviations from proton signal in TPC

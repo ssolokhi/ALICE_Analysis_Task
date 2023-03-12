@@ -31,17 +31,19 @@
 
 #include "AliAnalysisTaskMyTask.h"
 
-AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(): AliAnalysisTaskSE(), fAOD(nullptr), 
-fAODv0(nullptr), fOutputList(nullptr), fPIDResponse(nullptr), fMCEvent(nullptr),
+AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(): AliAnalysisTaskSE(), 
+fAOD(nullptr), fAODv0(nullptr), fOutputList(nullptr), fPIDResponse(nullptr), fMCEvent(nullptr),
 fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
-fTPCResponse(nullptr), fProtonResponse(nullptr), fThetaVsEta(nullptr) {
+fTPCResponse(nullptr), fTOFResponse(nullptr), fITSResponse(nullptr), fTRDResponse(nullptr),
+fProtonResponse(nullptr), fThetaVsEta(nullptr), fThetaVsPhi(nullptr) {
 	// Default ROOT I/O constructor, no memory allocation
 }
 
-AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char *name): AliAnalysisTaskSE(name), fAOD(nullptr), 
-fAODv0(nullptr), fOutputList(nullptr), fPIDResponse(nullptr), fMCEvent(nullptr),
+AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char *name): AliAnalysisTaskSE(name),
+fAOD(nullptr), fAODv0(nullptr), fOutputList(nullptr), fPIDResponse(nullptr), fMCEvent(nullptr),
 fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
-fTPCResponse(nullptr), fProtonResponse(nullptr), fThetaVsEta(nullptr) {
+fTPCResponse(nullptr), fTOFResponse(nullptr), fITSResponse(nullptr), fTRDResponse(nullptr),
+fProtonResponse(nullptr), fThetaVsEta(nullptr), fThetaVsPhi(nullptr) {
 	DefineInput(0, TChain::Class());
 	DefineOutput(1, TList::Class());
 }
@@ -60,17 +62,29 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects() {
 	fMCPDGCode = new TH1D("hMCPDGCode", "MC Particle Particle Data Group Code;PDG Code;N_{entries}", 1000, 0, 3500);
 	fOutputList->Add(fMCPDGCode);
  	
-	fTPCResponse = new TH2D("hTPCResponse", "TPC Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, 0, 5, 500, 0, 500);
+	fTPCResponse = new TH2D("hTPCResponse", "Time Projection Chamber Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, 0, 5, 250, 0, 500);
 	fOutputList->Add(fTPCResponse);
 
-	fProtonResponse = new TH2D("hProtonResponse", "TPC Proton Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, 0, 5, 500, 0, 500);
+	fTOFResponse = new TH2D("hTOFResponse", "Time OF Flight Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, 0, 5, 250, 10000, 40000);
+	fOutputList->Add(fTOFResponse);
+
+	fITSResponse = new TH2D("hITSResponse", "Inner Tracking System Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, 0, 5, 250, 0, 500);
+	fOutputList->Add(fITSResponse);
+
+	fTRDResponse = new TH2D("hTRDResponse", "Transition Radiation Detector Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, 0, 5, 100, 0, 30);
+	fOutputList->Add(fTRDResponse);
+
+	fProtonResponse = new TH2D("hProtonResponse", "TPC Proton Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, 0, 5, 250, 0, 500);
 	fOutputList->Add(fProtonResponse);
 
-	fTrackPtvsMass = new TH2D("hTrackPtvsMass", "Track Transverse Momentum vs. Mass;M [GeV/c^{2}]; p_{T} [GeV/c]", 100, 0, 5, 100, 0, 10);
+	fTrackPtvsMass = new TH2D("hTrackPtvsMass", "Track Transverse Momentum vs. Mass;M [GeV/c^{2}]; p_{T} [GeV/c]", 500, 0, 3, 100, 0, 10);
 	fOutputList->Add(fTrackPtvsMass);
 
-	fThetaVsEta = new TH2D("hThetaVsEta", "Particle Azimutal Angle vs. Pseudorapidity;#phi;#eta", 250, 0, TMath::Pi(), 250, -5, 5);
+	fThetaVsEta = new TH2D("hThetaVsEta", "Particle Azimutal Angle vs. Pseudorapidity;#theta;#eta", 100, 0, TMath::Pi(), 100, -5, 5);
 	fOutputList->Add(fThetaVsEta);
+
+	fThetaVsPhi = new TH2D("hThetaVsPhi", "Particle Azimutal Angle vs. Polar Angle;#theta;#phi", 100, 0, TMath::Pi(), 100, 0, 2*TMath::Pi());
+	fOutputList->Add(fThetaVsPhi);
 
 	PostData(1, fOutputList); // add the TList to the output file
 }
@@ -102,8 +116,12 @@ void AliAnalysisTaskMyTask::UserExec(Option_t *option) {
 
 		fTrackPtvsMass->Fill(track->M(), track->Pt());
 		fThetaVsEta->Fill(track->Theta(), track->Eta());
+		fThetaVsPhi->Fill(track->Theta(), track->Phi());
 
 		fTPCResponse->Fill(track->P(), track->GetTPCsignal());
+		fTOFResponse->Fill(track->P(), track->GetTOFsignal());
+		fITSResponse->Fill(track->P(), track->GetITSsignal());
+		fTRDResponse->Fill(track->P(), track->GetTRDsignal());
 
 		// available particle respones: kElectron, kProton, kPion, kKaon, kMoun, kTriton, kHe3
 		double protonSignal = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);

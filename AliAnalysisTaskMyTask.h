@@ -33,6 +33,9 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		// function treating Monte-Carlo generated particles
 		void ProcessMCParticles(); 
 
+		// function calculating decay vertex parameters
+		void ProcessVertex(AliAODv0 *vertex); 
+
 		// Called at the end of an analysis task
 		virtual void Terminate(Option_t *option);
 
@@ -52,24 +55,31 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 
 		AliAODEvent *fAOD; //! input event
 		TList *fOutputList; //! List of output histograms
-		AliAODVertex *fAODv0; //! primary vertex
+		AliAODv0 *fAODv0; //! primary vertex
 		AliPIDResponse *fPIDResponse; //! particle identification response
 		AliMCEvent *fMCEvent; //! Monte-Carlo event flag
 
 		TH1D *fZvertex; //! Vertex z-coordinate 
 		TH1D *fMCPDGCode; //! Monte-Carlo generated particles' PDG code
 
-		TH2D *fTPCResponse; //! TPC response 
-		TH2D *fTOFResponse; //! TPC response 
-		TH2D *fITSResponse; //! TPC response 
-		TH2D *fTRDResponse; //! TPC response 
+		TH2D *fTPCResponse; //! Time Projection Chamber response 
+		TH2D *fTOFResponse; //! Time Of Flight response 
+		TH2D *fITSResponse; //! Inner Tracking System response 
+		TH2D *fTRDResponse; //! Transition Radiation Detector response 
+		TH2D *fHMPIDResponse; //! High-Momentum Particle IDentification response 
 
-		TH2D *fProtonResponse; //! Pion TPC response 
+		TH2D *fProtonResponse; //! Proton TPC response 
 		TH2D *fTrackPtvsMass; //! Event transverse momentum
 		TH2D *fThetaVsEta; //! particle azimutal angle vs. pseudorapidity
 		TH2D *fThetaVsPhi; //! particle azimutal angle vs. polar angle
+		TH2D *fCentralityVsN; //! collision centrality vs. number of contributors
+		TH2D *fArmenterosPodolansky; //! Armenteros-Podolansky plot for V-events
 
 		const double fZvertexCut = 10; //! maximum primary vertex Z-coordinate [cm]
-		const double fProtonSigmaCut = 1; //! maximum number of standard deviations from proton signal in TPC
+		const double fProtonSigmaCut = 3; //! maximum number of standard deviations from proton signal in TPC
+
+		double alpha; // Armenteros-Podolansky plot asymmetry parameter
+		double qT; // Armenteros-Podolansky plot kinematic parameter
+
 };
 #endif

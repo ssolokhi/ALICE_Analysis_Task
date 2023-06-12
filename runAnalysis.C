@@ -24,7 +24,7 @@ void runAnalysis() {
 	AliAODInputHandler *aodHandler = new AliAODInputHandler();
 	mgr->SetInputEventHandler(aodHandler);
 
-	// Load the TPC parameters
+	// Load the PID parameters
 	TMacro PIDadd(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"));
 	AliAnalysisTaskPIDResponse *PIDResponseTask = reinterpret_cast<AliAnalysisTaskPIDResponse*>(PIDadd.Exec());
 
@@ -32,6 +32,11 @@ void runAnalysis() {
 	TMacro multSelection(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C"));
     AliMultSelectionTask* multSelectionTask = reinterpret_cast<AliMultSelectionTask*>(multSelection.Exec());
 
+    // Physics selection, use only fo data
+    //TMacro PhysicsAdd(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"));
+    //AliPhysicsSelection *physicsSelection = reinterpret_cast<AliPhysicsSelection *>(PhysicsAdd.Exec()); 
+
+    // User-created analysis task, must be added last
 	gInterpreter->LoadMacro("AliAnalysisTaskMyTask.cxx++g"); // 'g' flag for debugging 
 	AliAnalysisTaskMyTask *task = reinterpret_cast<AliAnalysisTaskMyTask*>(gInterpreter->ExecuteMacro("AddMyTask.C"));
 

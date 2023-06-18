@@ -14,7 +14,8 @@ AliAnalysisTaskMyTask *AddMyTask(TString name = "name") {
 	mgr->AddTask(task);
 	task->SelectCollisionCandidates(AliVEvent::kAnyINT); // Minimum bias trigger 
 	mgr->ConnectInput(task, 0, mgr->GetCommonInputContainer());
-	mgr->ConnectOutput(task, 1, mgr->CreateContainer("MyOutputContainer", TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // name of the ROOT file output subfolder
+	mgr->ConnectOutput(task, 1, mgr->CreateContainer("Histograms", TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // name of the ROOT file output subfolder
+	mgr->ConnectOutput(task, 2, mgr->CreateContainer("Vertex", TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // name of the ROOT file output subfolder
 
 	return task;
 }

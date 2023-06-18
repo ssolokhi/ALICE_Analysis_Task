@@ -54,7 +54,8 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		/// \endcond
 
 		AliAODEvent *fAOD; //! input event
-		TList *fOutputList; //! List of output histograms
+		TList *fOutputList; //! List of general output histograms
+		TList *fVertexList; //! List of output histograms refering to verteces
 		AliAODv0 *fAODv0; //! primary vertex
 		AliPIDResponse *fPIDResponse; //! particle identification response
 		AliMCEvent *fMCEvent; //! Monte-Carlo event flag
@@ -74,6 +75,7 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		TH2D *fThetaVsPhi; //! particle azimutal angle vs. polar angle
 		TH2D *fCentralityVsN; //! collision centrality vs. number of contributors
 		TH2D *fArmenterosPodolansky; //! Armenteros-Podolansky plot for V-events
+		TH2D *fDalitzPlot; //! Dalitz Plot for kaon 3-body decay
 
 		const double fZvertexCut = 10; //! maximum primary vertex Z-coordinate [cm]
 		const double fProtonSigmaCut = 3; //! maximum number of standard deviations from proton signal in TPC

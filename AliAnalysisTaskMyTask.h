@@ -41,7 +41,8 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 
 	private:
 		/*Adding class members; the //! tags are to be attached to ALL RUN-TIME
-		 RESOLVED members for ROOT to generate documentation correctly*/
+		 RESOLVED members for ROOT to generate documentation correctly
+		 names must begin with 'f' in accordance with ALICE's codestyle*/
 
 		AliAnalysisTaskMyTask(const AliAnalysisTaskMyTask&); //copy constructor, not implemented
 		AliAnalysisTaskMyTask &operator=(const AliAnalysisTaskMyTask&);
@@ -56,10 +57,12 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		AliAODEvent *fAOD; //! input event
 		TList *fOutputList; //! List of general output histograms
 		TList *fVertexList; //! List of output histograms refering to verteces
+		TTree *fVertexTree; //! Tree of vertex parameters
 		AliAODv0 *fAODv0; //! primary vertex
 		AliPIDResponse *fPIDResponse; //! particle identification response
 		AliMCEvent *fMCEvent; //! Monte-Carlo event flag
 
+		// histograms for the 'Histograms' subfolder
 		TH1D *fZvertex; //! Vertex z-coordinate 
 		TH1D *fMCPDGCode; //! Monte-Carlo generated particles' PDG code
 
@@ -74,14 +77,44 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		TH2D *fThetaVsEta; //! particle azimutal angle vs. pseudorapidity
 		TH2D *fThetaVsPhi; //! particle azimutal angle vs. polar angle
 		TH2D *fCentralityVsN; //! collision centrality vs. number of contributors
-		TH2D *fArmenterosPodolansky; //! Armenteros-Podolansky plot for V-events
 		TH2D *fDalitzPlot; //! Dalitz Plot for kaon 3-body decay
 
-		const double fZvertexCut = 10; //! maximum primary vertex Z-coordinate [cm]
-		const double fProtonSigmaCut = 3; //! maximum number of standard deviations from proton signal in TPC
+		// histograms for the 'Vertex' subfolder
 
-		double alpha; // Armenteros-Podolansky plot asymmetry parameter
-		double qT; // Armenteros-Podolansky plot kinematic parameter
+		TH2D *fArmenterosPodolansky; //! Armenteros-Podolansky plot for V-events
 
+		// N-tuples for the 'Vertex' subfolder
+
+		int fNDaughters;
+		int fVertexCharge;
+		int fVertexProng;
+		double fVertexPt;
+		double fChi2;
+		double fAlpha;
+		double fQt;
+		double fVertexRadius;
+		double fCPA;
+		double fDCAV0Daughters;
+		double fDCAtoPrimaryVertex;
+		double fPositiveDCA;
+		double fNegativeDCA;
+		double fDecayLength;
+
+		// Global Cuts
+		static constexpr double fZvertexCut = 10; //! maximum primary vertex Z-coordinate [cm]
+		
+		// Track Cuts
+		static constexpr double fProtonSigmaCut = 3; //! maximum number of standard deviations from proton signal in TPC
+
+		// Vertex Cuts
+		static constexpr double fMaxVertexPt = 10; //! maximum vertex transverse momentum [GeV]
+		static constexpr double fMaxChi2 = 4; //! maximum vertex chi^2 
+		static constexpr double fMinCPA = 0.95; //! maximum cosine of angle from interaction point to decay vertex 
+		static constexpr double fMaxQt = 1; //! maximum Armenteros-Podolansky plot transverse momentum [GeV]
+
+		static constexpr double fMaxDCAV0Daughters = 2; //! maximum DCA between daughter tracks [cm]
+		static constexpr double fMaxDCAtoPrimaryVertex = 30; //! maximum DCA between primary and decay verteces [cm]
+		static constexpr double fMinDCA = 0.01; //! minimum DCA from each daughter track to primary vertex [cm]
+		static constexpr double fMinDecayLength = 0.01; //! minimum decay length [cm]
 };
 #endif

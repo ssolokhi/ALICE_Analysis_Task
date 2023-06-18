@@ -23,6 +23,7 @@
 #include "AliMultSelection.h"
 #include "TChain.h"
 #include "TList.h"
+#include "TTree.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TVector3.h"
@@ -33,20 +34,24 @@
 #include "AliAnalysisTaskMyTask.h"
 
 AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(): AliAnalysisTaskSE(), 
-fAOD(nullptr), fAODv0(nullptr), fOutputList(nullptr), fVertexList(nullptr), fPIDResponse(nullptr), fMCEvent(nullptr),
-fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
+fAOD(nullptr), fAODv0(nullptr), fOutputList(nullptr), fVertexList(nullptr), fVertexTree(nullptr), fPIDResponse(nullptr), 
+fNDaughters(0), fVertexCharge(0), fVertexProng(0), fVertexPt(0), fChi2(0), fAlpha(0), fQt(0), fCPA(0), 
+fVertexRadius(0), fDecayLength(0), fDCAV0Daughters(0), fDCAtoPrimaryVertex(0), fPositiveDCA(0), fNegativeDCA(0),
+fMCEvent(nullptr), fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
 fTPCResponse(nullptr), fTOFResponse(nullptr), fITSResponse(nullptr), fTRDResponse(nullptr), fHMPIDResponse(nullptr),
 fProtonResponse(nullptr), fThetaVsEta(nullptr), fThetaVsPhi(nullptr), fCentralityVsN(nullptr),
-fArmenterosPodolansky(nullptr), alpha(0), qT(0), fDalitzPlot(nullptr) {
+fArmenterosPodolansky(nullptr), fDalitzPlot(nullptr) {
 	// Default ROOT I/O constructor, no memory allocation
 }
 
 AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char *name): AliAnalysisTaskSE(name),
-fAOD(nullptr), fAODv0(nullptr), fOutputList(nullptr), fVertexList(nullptr), fPIDResponse(nullptr), fMCEvent(nullptr),
-fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
+fAOD(nullptr), fAODv0(nullptr), fOutputList(nullptr), fVertexList(nullptr), fVertexTree(nullptr), fPIDResponse(nullptr),
+fNDaughters(0), fVertexCharge(0), fVertexProng(0), fVertexPt(0), fChi2(0), fAlpha(0), fQt(0), fCPA(0), 
+fVertexRadius(0), fDecayLength(0), fDCAV0Daughters(0), fDCAtoPrimaryVertex(0), fPositiveDCA(0), fNegativeDCA(0),
+fMCEvent(nullptr), fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
 fTPCResponse(nullptr), fTOFResponse(nullptr), fITSResponse(nullptr), fTRDResponse(nullptr), fHMPIDResponse(nullptr),
 fProtonResponse(nullptr), fThetaVsEta(nullptr), fThetaVsPhi(nullptr), fCentralityVsN(nullptr),
-fArmenterosPodolansky(nullptr), alpha(0), qT(0), fDalitzPlot(nullptr) {
+fArmenterosPodolansky(nullptr), fDalitzPlot(nullptr) {
 	DefineInput(0, TChain::Class());
 	DefineOutput(1, TList::Class());
 	DefineOutput(2, TList::Class());
@@ -80,7 +85,7 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects() {
 	fTRDResponse = new TH2D("hTRDResponse", "Transition Radiation Detector Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 100, 0, 30);
 	fOutputList->Add(fTRDResponse);
 
-	fHMPIDResponse = new TH2D("hHMPIDResponse", "High-Momentum Particle IDentification Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 200, -25, 25, 100, 0, 100);
+	fHMPIDResponse = new TH2D("hHMPIDResponse", "High-Momentum Particle IDentification Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 200, -25, 25, 100, 0, 1);
 	fOutputList->Add(fHMPIDResponse);
 
 	fProtonResponse = new TH2D("hProtonResponse", "TPC Proton Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 250, 0, 250);
@@ -107,6 +112,24 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects() {
 	fArmenterosPodolansky = new TH2D("fArmenterosPodolansky", "Armenteros-Podolansky Plot for V-Events;alpha;q_{T} [GeV/c]", 100, -1, 1, 100, 0, 0.25);
 	fVertexList->Add(fArmenterosPodolansky);
 
+	fVertexTree = new TTree("fVertexTree", "Vertex Parameters");
+
+	fVertexTree->Branch("fNDaughters", &fNDaughters, "fNDaughters/I"); 
+	fVertexTree->Branch("fVertexCharge", &fVertexCharge, "fVertexCharge/I"); 
+	fVertexTree->Branch("fVertexProng", &fVertexProng, "fVertexProng/I");
+	fVertexTree->Branch("fVertexPt", &fVertexPt, "fVertexPt/D"); 
+	fVertexTree->Branch("fChi2", &fChi2, "fChi2/D"); 
+	fVertexTree->Branch("fAlpha", &fAlpha, "fAlpha/D"); 
+	fVertexTree->Branch("fQt", &fQt, "fQt/D");
+	fVertexTree->Branch("fVertexRadius", &fVertexRadius, "fVertexRadius/D"); 
+	fVertexTree->Branch("fCPA", &fCPA, "fCPA/D"); 
+	fVertexTree->Branch("fDecayLength", &fDecayLength, "fDecayLength/D");
+	fVertexTree->Branch("fDCAV0Daughters", &fDCAV0Daughters, "fDCAV0Daughters/D"); 
+	fVertexTree->Branch("fDCAtoPrimaryVertex", &fDCAtoPrimaryVertex, "fDCAtoPrimaryVertex/D"); 
+	fVertexTree->Branch("fPositiveDCA", &fPositiveDCA, "fPositiveDCA/D"); 
+	fVertexTree->Branch("fNegativeDCA", &fNegativeDCA, "fNegativeDCA/D");
+
+	fVertexList->Add(fVertexTree);
 
 	PostData(1, fOutputList); // add the TLists to the output file
 	PostData(2, fVertexList); 
@@ -201,25 +224,42 @@ void AliAnalysisTaskMyTask::ProcessMCParticles() {
 }
 
 void AliAnalysisTaskMyTask::ProcessVertex(AliAODv0 *vertex) {
+	double primaryVertexPosition[3] = {fAOD->GetPrimaryVertex()->GetX(), fAOD->GetPrimaryVertex()->GetY(), fAOD->GetPrimaryVertex()->GetZ()};
+	
+	fNDaughters = vertex->GetNDaughters();
+	fVertexCharge = vertex->GetCharge();
+	fVertexProng = vertex->GetNProngs();
+
+	fVertexPt = vertex->Pt();
+	if (fVertexPt > fMaxVertexPt) return;
+	fChi2 = vertex->Chi2V0();
+	if (fChi2 > fMaxChi2) return;
+
+	fCPA = vertex->CosPointingAngle(primaryVertexPosition);
+	if (fCPA < fMinCPA) return;
+
 	// due to finit detector resolution, the tracks never meet precisely
 	// an upper limit reduces background from spurious track crossings
-	double DCAV0Daughters = vertex->DcaV0Daughters();
+	fDCAV0Daughters = vertex->DcaV0Daughters();
+	if (fDCAV0Daughters > fMaxDCAV0Daughters) return;
 
 	// If the V0 candidate is a genuine particle, its momentum should point pack to the IP;
 	// spurious candidates might not do so => an upper limit is placed to reduce their contribution
-	double DCAtoPrimaryVertex = vertex->DcaV0ToPrimVertex();
+	fDCAtoPrimaryVertex = vertex->DcaV0ToPrimVertex();
+	if (fDCAtoPrimaryVertex > fMaxDCAtoPrimaryVertex) return;
 
 	// the daughter tracks are curved in the magnetic field + neutral particles decay at some distance from the interaction point
 	// => daughter tracks must not extrapolate back to primary vertex but some distance away from it
 	// should place a lower limit on these param-s can reduce background from tracks from the IP 
-	double positiveDCA = vertex->DcaPosToPrimVertex();
-	double negativeDCA = vertex->DcaNegToPrimVertex();
+	fPositiveDCA = vertex->DcaPosToPrimVertex();
+	fNegativeDCA = vertex->DcaNegToPrimVertex();
+	if (fPositiveDCA < fMinDCA || fNegativeDCA < fMinDCA) return;
 
 	// neutral strange particles decay weakly in a fex cm, so the decay vertex should be displaced from the IP
 	// a lower limit can eliminate part of the background from the IP
-	double primVertexPosition[3] = {fAOD->GetPrimaryVertex()->GetX(), fAOD->GetPrimaryVertex()->GetY(), fAOD->GetPrimaryVertex()->GetZ()};
-	double DCAdecayLength = vertex->DecayLengthV0(primVertexPosition);
-
+	fDecayLength = vertex->DecayLengthV0(primaryVertexPosition);
+	if (fDecayLength < fMinDecayLength) return;
+	
 	TVector3 vertexMomentum(vertex->MomV0X(), vertex->MomV0Y(), vertex->MomV0Z());
 	TVector3 positiveDaughterMomentum(vertex->MomPosX(), vertex->MomPosY(), vertex->MomPosZ());
 	TVector3 negativeDaughterMomentum(vertex->MomNegX(), vertex->MomNegY(), vertex->MomNegZ());
@@ -227,10 +267,17 @@ void AliAnalysisTaskMyTask::ProcessVertex(AliAODv0 *vertex) {
 	double positiveLongitudalProjection = positiveDaughterMomentum.Dot(vertexMomentum)/vertexMomentum.Mag();
 	double negativeLongitudalProjection = negativeDaughterMomentum.Dot(vertexMomentum)/vertexMomentum.Mag();
 
+	fVertexRadius = vertex->RadiusV0();
+	fAlpha = vertex->AlphaV0();
+	if (TMath::Abs(fAlpha) > 1) return; // |alpha| <= 1 by definition
+	fQt = vertex->PtArmV0();
+	if (fQt > fMaxQt) return;
+
 	//standard functions AlphaV0 and PtArmVo are well-defined, but for educational purposes using user-defined functions
 	double alpha = (positiveLongitudalProjection - negativeLongitudalProjection)/(positiveLongitudalProjection + negativeLongitudalProjection);
 	double qT = positiveDaughterMomentum.Perp(vertexMomentum);
 	fArmenterosPodolansky->Fill(alpha, qT);
+	fVertexTree->Fill();
 }
 
 void AliAnalysisTaskMyTask::Terminate(Option_t *option) {

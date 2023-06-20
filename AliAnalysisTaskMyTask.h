@@ -54,51 +54,51 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 		ClassDef(AliAnalysisTaskMyTask, 1);
 		/// \endcond
 
-		AliAODEvent *fAOD; //! input event
-		TList *fOutputList; //! List of general output histograms
-		TList *fVertexList; //! List of output histograms refering to verteces
-		TTree *fVertexTree; //! Tree of vertex parameters
-		AliAODv0 *fAODv0; //! primary vertex
-		AliPIDResponse *fPIDResponse; //! particle identification response
-		AliMCEvent *fMCEvent; //! Monte-Carlo event flag
+		AliAODEvent *fAOD = nullptr; //! input event
+		TList *fOutputList = nullptr; //! List of general output histograms
+		TList *fVertexList = nullptr; //! List of output histograms refering to verteces
+		TTree *fVertexTree = nullptr; //! Tree of vertex parameters
+		AliAODv0 *fAODv0 = nullptr; //! primary vertex
+		AliPIDResponse *fPIDResponse = nullptr; //! particle identification response
+		AliMCEvent *fMCEvent = nullptr; //! Monte-Carlo event flag
 
 		// histograms for the 'Histograms' subfolder
-		TH1D *fZvertex; //! Vertex z-coordinate 
-		TH1D *fMCPDGCode; //! Monte-Carlo generated particles' PDG code
+		TH1D *fZvertex = nullptr; //! Vertex z-coordinate 
+		TH1D *fMCPDGCode = nullptr; //! Monte-Carlo generated particles' PDG code
 
-		TH2D *fTPCResponse; //! Time Projection Chamber response 
-		TH2D *fTOFResponse; //! Time Of Flight response 
-		TH2D *fITSResponse; //! Inner Tracking System response 
-		TH2D *fTRDResponse; //! Transition Radiation Detector response 
-		TH2D *fHMPIDResponse; //! High-Momentum Particle IDentification response 
+		TH2D *fTPCResponse = nullptr; //! Time Projection Chamber response 
+		TH2D *fTOFResponse = nullptr; //! Time Of Flight response 
+		TH2D *fITSResponse = nullptr; //! Inner Tracking System response 
+		TH2D *fTRDResponse = nullptr; //! Transition Radiation Detector response 
+		TH2D *fHMPIDResponse = nullptr; //! High-Momentum Particle IDentification response 
 
-		TH2D *fProtonResponse; //! Proton TPC response 
-		TH2D *fTrackPtvsMass; //! Event transverse momentum
-		TH2D *fThetaVsEta; //! particle azimutal angle vs. pseudorapidity
-		TH2D *fThetaVsPhi; //! particle azimutal angle vs. polar angle
-		TH2D *fCentralityVsN; //! collision centrality vs. number of contributors
-		TH2D *fDalitzPlot; //! Dalitz Plot for kaon 3-body decay
+		TH2D *fProtonResponse = nullptr; //! Proton TPC response 
+		TH2D *fTrackPtvsMass = nullptr; //! Event transverse momentum
+		TH2D *fThetaVsEta = nullptr; //! particle azimutal angle vs. pseudorapidity
+		TH2D *fThetaVsPhi = nullptr; //! particle azimutal angle vs. polar angle
+		TH2D *fCentralityVsN = nullptr; //! collision centrality vs. number of contributors
+		TH2D *fDalitzPlot = nullptr; //! Dalitz Plot for kaon 3-body decay
 
 		// histograms for the 'Vertex' subfolder
 
-		TH2D *fArmenterosPodolansky; //! Armenteros-Podolansky plot for V-events
+		TH2D *fArmenterosPodolansky = nullptr; //! Armenteros-Podolansky plot for V-events
 
 		// N-tuples for the 'Vertex' subfolder
 
-		int fNDaughters;
-		int fVertexCharge;
-		int fVertexProng;
-		double fVertexPt;
-		double fChi2;
-		double fAlpha;
-		double fQt;
-		double fVertexRadius;
-		double fCPA;
-		double fDCAV0Daughters;
-		double fDCAtoPrimaryVertex;
-		double fPositiveDCA;
-		double fNegativeDCA;
-		double fDecayLength;
+		int fNDaughters = 0;
+		int fVertexCharge = 0;
+		int fVertexProng = 0;
+		double fVertexPt = 0;
+		double fChi2 = 0;
+		double fAlpha = 0;
+		double fQt = 0;
+		double fVertexRadius = 0;
+		double fCPA = 0;
+		double fDCAV0Daughters = 0;
+		double fDCAtoPrimaryVertex = 0;
+		double fPositiveDCA = 0;
+		double fNegativeDCA = 0;
+		double fDecayLength = 0;
 
 		// Global Cuts
 		static constexpr double fZvertexCut = 10; //! maximum primary vertex Z-coordinate [cm]
@@ -108,9 +108,9 @@ class AliAnalysisTaskMyTask: public AliAnalysisTaskSE {
 
 		// Vertex Cuts
 		static constexpr double fMaxVertexPt = 10; //! maximum vertex transverse momentum [GeV]
-		static constexpr double fMaxChi2 = 4; //! maximum vertex chi^2 
+		static constexpr double fMaxChi2 = 2.25; //! maximum vertex chi^2 
 		static constexpr double fMinCPA = 0.95; //! maximum cosine of angle from interaction point to decay vertex 
-		static constexpr double fMaxQt = 1; //! maximum Armenteros-Podolansky plot transverse momentum [GeV]
+		static constexpr double fMaxQt = 0.25; //! maximum Armenteros-Podolansky plot transverse momentum [GeV]
 
 		static constexpr double fMaxDCAV0Daughters = 2; //! maximum DCA between daughter tracks [cm]
 		static constexpr double fMaxDCAtoPrimaryVertex = 30; //! maximum DCA between primary and decay verteces [cm]

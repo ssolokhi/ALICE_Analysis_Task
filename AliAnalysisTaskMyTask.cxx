@@ -33,25 +33,11 @@
 
 #include "AliAnalysisTaskMyTask.h"
 
-AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(): AliAnalysisTaskSE(), 
-fAOD(nullptr), fAODv0(nullptr), fOutputList(nullptr), fVertexList(nullptr), fVertexTree(nullptr), fPIDResponse(nullptr), 
-fNDaughters(0), fVertexCharge(0), fVertexProng(0), fVertexPt(0), fChi2(0), fAlpha(0), fQt(0), fCPA(0), 
-fVertexRadius(0), fDecayLength(0), fDCAV0Daughters(0), fDCAtoPrimaryVertex(0), fPositiveDCA(0), fNegativeDCA(0),
-fMCEvent(nullptr), fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
-fTPCResponse(nullptr), fTOFResponse(nullptr), fITSResponse(nullptr), fTRDResponse(nullptr), fHMPIDResponse(nullptr),
-fProtonResponse(nullptr), fThetaVsEta(nullptr), fThetaVsPhi(nullptr), fCentralityVsN(nullptr),
-fArmenterosPodolansky(nullptr), fDalitzPlot(nullptr) {
+AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(): AliAnalysisTaskSE() {
 	// Default ROOT I/O constructor, no memory allocation
 }
 
-AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char *name): AliAnalysisTaskSE(name),
-fAOD(nullptr), fAODv0(nullptr), fOutputList(nullptr), fVertexList(nullptr), fVertexTree(nullptr), fPIDResponse(nullptr),
-fNDaughters(0), fVertexCharge(0), fVertexProng(0), fVertexPt(0), fChi2(0), fAlpha(0), fQt(0), fCPA(0), 
-fVertexRadius(0), fDecayLength(0), fDCAV0Daughters(0), fDCAtoPrimaryVertex(0), fPositiveDCA(0), fNegativeDCA(0),
-fMCEvent(nullptr), fZvertex(nullptr), fTrackPtvsMass(nullptr), fMCPDGCode(nullptr),
-fTPCResponse(nullptr), fTOFResponse(nullptr), fITSResponse(nullptr), fTRDResponse(nullptr), fHMPIDResponse(nullptr),
-fProtonResponse(nullptr), fThetaVsEta(nullptr), fThetaVsPhi(nullptr), fCentralityVsN(nullptr),
-fArmenterosPodolansky(nullptr), fDalitzPlot(nullptr) {
+AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char *name): AliAnalysisTaskSE(name) {
 	DefineInput(0, TChain::Class());
 	DefineOutput(1, TList::Class());
 	DefineOutput(2, TList::Class());
@@ -73,22 +59,22 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects() {
 	fMCPDGCode = new TH1D("hMCPDGCode", "MC Particle Particle Data Group Code;PDG Code;N_{entries}", 1000, 0, 3500);
 	fOutputList->Add(fMCPDGCode);
  	
-	fTPCResponse = new TH2D("hTPCResponse", "Time Projection Chamber Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 250, 0, 250);
+	fTPCResponse = new TH2D("hTPCResponse", "Time Projection Chamber Response;p/Z [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 250, 0, 250);
 	fOutputList->Add(fTPCResponse);
 
-	fTOFResponse = new TH2D("hTOFResponse", "Time OF Flight Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 250, 10000, 40000);
+	fTOFResponse = new TH2D("hTOFResponse", "Time OF Flight Response;p/Z [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 250, 10000, 35000);
 	fOutputList->Add(fTOFResponse);
 
-	fITSResponse = new TH2D("hITSResponse", "Inner Tracking System Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 250, 0, 250);
+	fITSResponse = new TH2D("hITSResponse", "Inner Tracking System Response;p/Z [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 250, 0, 250);
 	fOutputList->Add(fITSResponse);
 
-	fTRDResponse = new TH2D("hTRDResponse", "Transition Radiation Detector Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 100, 0, 30);
+	fTRDResponse = new TH2D("hTRDResponse", "Transition Radiation Detector Response;p/Z [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 100, 0, 20);
 	fOutputList->Add(fTRDResponse);
 
-	fHMPIDResponse = new TH2D("hHMPIDResponse", "High-Momentum Particle IDentification Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 200, -25, 25, 100, 0, 1);
+	fHMPIDResponse = new TH2D("hHMPIDResponse", "High-Momentum Particle IDentification Cherenkov Angle;p/Z [GeV/c];#theta [rad.]", 200, -25, 25, 100, 0, 1);
 	fOutputList->Add(fHMPIDResponse);
 
-	fProtonResponse = new TH2D("hProtonResponse", "TPC Proton Response;p [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 250, 0, 250);
+	fProtonResponse = new TH2D("hProtonResponse", "TPC Proton Response;p/Z [GeV/c];#frac{dE}{dx} [arb.units]", 100, -5, 5, 250, 0, 250);
 	fOutputList->Add(fProtonResponse);
 
 	fTrackPtvsMass = new TH2D("hTrackPtvsMass", "Track Transverse Momentum vs. Mass;M [GeV/c^{2}]; p_{T} [GeV/c]", 500, 0, 3, 100, 0, 10);
@@ -152,6 +138,7 @@ void AliAnalysisTaskMyTask::UserExec(Option_t *option) {
 	if (TMath::Abs(vertexZ) > fZvertexCut) return;; // to exclude events far from the detector center
 
 	AliMultSelection *multSelection = dynamic_cast<AliMultSelection*>(fAOD->FindListObject("MultSelection"));
+	// might not be present; don't write a return statement if you don't want to loose all statistics
 	if (multSelection) {
 		double centralityV0M = multSelection->GetMultiplicityPercentile("V0M");
 		fCentralityVsN->Fill(centralityV0M, fAOD->GetPrimaryVertex()->GetNContributors());

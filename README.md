@@ -4,53 +4,69 @@
 
 ## Description
 
-The following code presents an example of data analysis macros used for ALICE Run 2 data. 
+The following code presents an example of data analysis macros used for ALICE Run 3 (2022 to this day) data. 
 
-Current version of the code is used to analyse ALICE 2016-2018 data. The code only saves events that have passed the Minimum bias trigger. For these events, the transverse momentum (p<sub>T</sub>) and mass, the primary vertex Z coordinate (z<sub>V0</sub>), the centrality, and the number of standart deviations from the TPC proton responce (N<sub>$\sigma$</sub>) are extracted. The following cuts are applied:
+THe analysis procedure is coded using C++ by creating a structure **AnalysisExample** that has four main parts:
 
-- pile-up events are rejected;
+- definition of configurables and filters;
 
-- |z<sub>V0</sub>| < 10 cm;
+- function **init**, where histograms are defined;
 
-- N<sub>$\sigma$</sub> < 3.
+- function **processCollisions**, where general information on collisions is obtained;
+
+- function **processVerteces**, where one studies properties of neutral decay verteces.
+
     
 ## Repository Content
     
 This repository contains several files:
     
 - This **README** file;
-    
-- A header (**AliAnalysisTaskMyTask.h**) file containing class methods' prototypes required for the analysis;
-    
-- A methods' implementation (**AliAnalysisTaskMyTask.cxx**) files corresponding to the header files;
-    
-- A class instance (**AddMyTask.C**) macro;
-    
-- A so called *steering* (**runAnalysis.C**) macro for defining JAliEn instructions for running on GRID.
 
-The full code lisence can be found in *AliAnalysisTaskMyTask.cxx*.
+- **AnalysisExample.cxx**, containing the analysis procedure's description (namely, the structure's methods);
+
+- **config.json**, containing the configuration settings of the analysis;
+
+- a bash script **run.sh**, used to initialize the analysis.
+
+The full code lisence can be found in *AnalysisExample.cxx*.
 
 
 ## Prerequisites
 
-In order to use the following code one must first install [AliPhysics](https://github.com/alisw/AliPhysics) via AliBuild. A complete guide for AliBuild download, installation and build can be found here: https://alice-doc.github.io/alice-analysis-tutorial/ (*please mind the platform-specific package requirements!*). After installing AliPhysics it can be verified by typing *alienv enter AliPhysics/latest*. If no errors appear, the installation has been successful.
+In order to use the following code one must first install [O2 and O2Physics](https://aliceo2group.github.io/analysis-framework/docs/gettingstarted/installing.html) via [AliBuild](https://alice-doc.github.io/alice-analysis-tutorial/building/custom.html). After installing O2Physics it can be verified by typing
+```
+alienv enter VO_ALICE@O2Physics::latest
+```
+If no errors appear, the installation has been successful.
 
 ## Usage
 
-After entering the AliPhysics environment, the steering macros can be rub by typing *aliroot runAnalysis.C*.
+> [!TIP]
+> In order to avoid the necessity to add a cmake file to the O2Physics repository, one can simply place the analysis code into some unused *.cxx* file already present there, e.g. replace the contents of **~/O2Physics/Tutorials/PWGMM/myExampleTask.cxx** with the new code. The build can then be completed withoud modifying the cmake files. ROOT, JSON, and bash files do not require any extra actions either way
 
-The code must first be trouble-shot locally first. In order to run locally, the *localRun* option in the steering macro to *true*. An *AliAOD.root* file is required; it can be downloaded from any ALICE run folder (the easiest way to download it is via [AliMonitor](https://alimonitor.cern.ch/) from */alice/data/\**).
+### Code Modification
 
-When all errors (and preferably warnings as well) are fixed, the code can be tested on GRID by setting the *gridTest* option in the steering macro to *true* (and the *localRun* option to *false*). For this repository's code 1 test file will be used. **Do not forget to use an up-to-date version of AliPhysics with JAliEn!**
+Any modification of the code requires a rebuild of the existing installation of O2Physics. To do that, move to the directory where O2Physics is installed and run the following command:
+```
+aliBuild build O2Physics --debug
+```
+This will (the *debug* option allows to get a full backtrace, shall an error occur). If the build is successful, one can run the analysis.
 
-> When this **README** file was written, the optimal AliPhysics version was *vAN-20201115_JALIEN-1*
+### Running Code Locally
 
-After the code is tested on GRID, set the *gridTest* option to *false* and run the steering macros again. Several new files will be created: *.xml* collections for runs' data, *.sh* executables and merging *.C* macros. Your files will be copied to your GRID working directory. You can monitor the progress of your analysis with [AliMonitor](https://alimonitor.cern.ch/). 
 
-When all GRID jobs are done, change the *SetRunMode* option to *terminate* at the end of the steering macro and run it. That will create merging jobs that will merge a lot of analysis results' files into a single file for each run. *All finished jobs will be killed automatically!* 
+Move to the folder where your code is located. Running locally requires having an input file of type **AO2D.root**. Enter the O2Physics shell by typing 
+```
+alienv enter VO_ALICE@O2Physics::latest
+```
+Now run the bash script triggering the analysis (this may require changing the ownership of the file via *chmod 777*):
+```
+./run.sh
+```
+This will initialize the analysis by invoking relevant tables and using the settings from the configuration file.
 
-The last time the macro must be run with the *SetMergeViaJDL* option set to *false*. This will download a single *.root* file containing all analysis results on your PC/laptop. After that, the resulting file can be studied with additional ROOT macros.
+After the execution is over, the folder will contain a **AnalysisResults.root** file containing all output histograms and tables.
 
-## Gratitude
-
-I am greatly thankful to Redmer Bertens, the author of the [ALICE Analysis Tutorial](https://alice-doc.github.io/alice-analysis-tutorial/), for detailed analysis instructions and for prompt responces to code modification proposals.
+## Further Reading
+Please refer to the [O<sup>2</sup> Analysis Framework Documentation](https://aliceo2group.github.io/analysis-framework/docs/), for detailed analysis and troubleshooting instructions.

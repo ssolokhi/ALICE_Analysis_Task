@@ -23,7 +23,6 @@
 #include "Common/DataModel/TrackSelectionTables.h" // For DCA info
 #include "Common/DataModel/PIDResponse.h" // For PID: expected values, resolutions,etc.
 
-#include "PWGEM/PhotonMeson/DataModel/gammaTables.h" // For PHOS clusters
 #include "PWGLF/DataModel/LFStrangenessTables.h" // for strangeness analysis
 #include "CommonConstants/PhysicsConstants.h" // for masses
 
@@ -44,9 +43,9 @@ struct AnalysisExample {
   Configurable<float> etaCut{"etaCut", 1.2f, "Maximum Pseudorapidity"};
 
   // Collisions-related:
-  Configurable<float> zVertexCut{"zVertexCut", 10.0f, "Maximum Primary Vertex Z coordinate [cm]"};
-  Filter zVertexFilter = nabs(collision::posZ) < zVertexCut && collision::posZ != 0.0f;
-  Filter eventSelectionFilter = evsel::sel8 == true;
+  Configurable<float> zVertexCut{"zVertexCut", 15.0f, "Maximum Primary Vertex Z coordinate [cm]"};
+  Filter zVertexFilter = (nabs(collision::posZ) < zVertexCut && collision::posZ != 0.0f);
+  Filter eventSelectionFilter = (evsel::sel8 == true);
   using filteredCollision = Filtered<Join<Collisions, EvSels>>::iterator;
 
   // Decay vertex-related:
@@ -59,19 +58,18 @@ struct AnalysisExample {
   Configurable<float> maxQt{"maxQt", 0.5f, "Maximum Decay Product Transverse Momentum [GeV]"};
 
   // filter can only be applied to static columns
-  Filter preV0Filter = nabs(v0data::dcapostopv) > v0setting_dcapostopv
-  && nabs(v0data::dcanegtopv) > v0setting_dcanegtopv 
-  && v0data::dcaV0daughters < v0setting_dcav0dau;
+  Filter preV0Filter = (nabs(v0data::dcapostopv) > v0setting_dcapostopv && nabs(v0data::dcanegtopv) > v0setting_dcanegtopv 
+  && v0data::dcaV0daughters < v0setting_dcav0dau);
   using filteredV0s = Filtered<Join<V0Datas, McV0Labels>>;
 
   // Tracks-related:
   Configurable<float> maxTpcNSigmaPi{"maxTpcNSigmaPi", 3.0f, "Maximum N_{#sigma_{#pi}} from TPC signal"};
   Configurable<float> maxTrackDCA{"maxTrackDCA", 0.5f, "Maximum Track DCA [cm]"};
 
-  Filter etaFilter = nabs(track::eta) < etaCut;
-  Filter dcaFilter = nabs(track::dcaXY) < maxTrackDCA;
+  Filter etaFilter = (nabs(track::eta) < etaCut);
+  Filter dcaFilter = (nabs(track::dcaXY) < maxTrackDCA);
 
-  using daughterTracks = Join<Tracks, TracksExtra, TracksDCA, pidTPCPi, McTrackLabels>;
+  using daughterTracks = Join<Tracks, TracksExtra, TracksDCA, pidTPCPi, TOFSignal, pidTOFEl, pidTOFbeta, McTrackLabels>;
   using filteredTracks = Filtered<daughterTracks>;
 
   HistogramRegistry histosCollisions{"histosCollisions", {}, OutputObjHandlingPolicy::AnalysisObject};
@@ -82,32 +80,36 @@ struct AnalysisExample {
   void init(InitContext const&) {
     printf("Init\n");
     // define axes:
-    const AxisSpec axisVertexZ{100, -10.0f, 10.0f, "Vertex Z Coordinate [cm]"};
-    const AxisSpec axisPt{nBinsPt, 0, 10.0f, "p_{T} [GeV]"};
-    const AxisSpec axisQt{nBinsPt, 0, 0.5f, "q_{T} [GeV]"};
+    const AxisSpec axisVertexZ{100, -15.0f, 15.0f, "Vertex Z Coordinate [cm]"};
+    const AxisSpec axisPt{nBinsPt, 0, 5.0f, "p_{T} [GeV]"};
+    const AxisSpec axisQt{nBinsPt, 0, 0.25f, "q_{T} [GeV]"};
     const AxisSpec axisEta{300, -1.5f, 1.5f, "#eta"};
     const AxisSpec axisTheta{100, 0, M_PI, "#theta"};
     const AxisSpec axisPhi{300, 0, 2*M_PI, "#phi"};
 
     // General collision histograms:
-    histosCollisions.add("vertexZ", "vertexZ", kTH1F, {axisVertexZ});
-    histosCollisions.add("eventCounter", "eventCounter", kTH1F, {{1, 0, 1, "Accepted Events Count"}});
-    histosCollisions.add("nContributors", "nContributors", kTH1F, {{100, 0, 100, "Number of Collision Contributors"}});
+    histosCollisions.add("vertexZ", "Primary Vertex Z Coordinate", kTH1F, {axisVertexZ});
+    histosCollisions.add("eventCounter", "Event Counter", kTH1F, {{1, 0, 1, "Accepted Events Count"}});
+    histosCollisions.add("nContributors", "Number Of Primary Vertex Contributors", kTH1F, {{100, 0, 100, "Number of Collision Contributors"}});
 
     // Monte-Carlo histograms:
-    histosMC.add("mcV0Energy", "mcV0Energy", kTH1F, {{100, 0, 10, "E_{gen} {GeV}"}});
+    histosMC.add("mcV0Energy", "Generated Energy Of Decay Vertex", kTH1F, {{100, 0, 10, "E_{gen} {GeV}"}});
 
     // Decay Vertex histograms:
-    histosDecayVertex.add("ArmenterosPodolanskiPlot", "ArmenterosPodolanskiPlot", kTH2F, {{100, -1, 1, "#alpha"}, axisQt});
-    histosDecayVertex.add("v0PosNsigmaPi", "v0PosNsigmaPi", kTH1F, {{100, -5, 5, "N_{#sigma, #pi}"}});
-    histosDecayVertex.add("v0NegNsigmaPi", "v0NegNsigmaPi", kTH1F, {{100, -5, 5, "N_{#sigma, #pi}"}});
+    histosDecayVertex.add("ArmenterosPodolanskiPlot", "Armenteros-Podolanski Plot For Decay Verteces", kTH2F, {{100, -1, 1, "#alpha"}, axisQt});
+    histosDecayVertex.add("v0PosNTPCsigmaPi", "TPC Pion Response For Positively Charged Decay Vertex Daughter", kTH1F, {{100, -5, 5, "N_{#sigma, #pi}"}});
+    histosDecayVertex.add("v0NegNTPCsigmaPi", "TPC Pion Response For Negatively Charged Decay Vertex Daughter", kTH1F, {{100, -5, 5, "N_{#sigma, #pi}"}});
+    histosDecayVertex.add("v0PosNTOFsigmaEl", "TOF Electron Response For Positively Charged Decay Vertex Daughter", kTH1F, {{100, -5, 5, "N_{#sigma, e}"}});
+    histosDecayVertex.add("v0NegNTOFsigmaEl", "TOF Electron Response For Negatively Charged Decay Vertex Daughter", kTH1F, {{100, -5, 5, "N_{#sigma, e}"}});
 
     // Track histograms:
-    histosTracks.add("etaVsPhi", "etaVsPhi", kTH2F, {axisEta, axisPhi});
-    histosTracks.add("TPCresponse", "TPCresponse", kTH2F, {axisPt, {500, 0, 500, "TPC Response [a.u.]"}});
-    histosTracks.add("pionResponse", "pionResponse", kTH2F, {axisPt, {500, 0, 500, "TPC Pion Response [a.u.]"}});
-    histosTracks.add("TRDresponse", "TRDresponse", kTH2F, {axisPt, {1000, -1000, 0, "TRD Response [a.u.]"}});
-    histosTracks.add("tpcNClsCrossed", "tpcNClsCrossed", kTH1F, {{160, 0, 160, "Number of Crossed TPC Clusters"}});
+    histosTracks.add("etaVsPhi", "Track #eta Vs. #phi", kTH2F, {axisEta, axisPhi});
+    histosTracks.add("TPCresponse", "TPC Energy Loss Signal", kTH2F, {axisPt, {250, 0, 250, "TPC Response [a.u.]"}});
+    histosTracks.add("TOFresponse", "TOF Response", kTH2F, {axisPt, {100, -5, 5, "TOF Response, 10^{-6} [a.u.]"}});
+    histosTracks.add("pionResponse", "TPC #pi Energy Loss Signal ", kTH2F, {axisPt, {250, 0, 250, "TPC Pion Response [a.u.]"}});
+    histosTracks.add("TRDresponse", "TRD Response", kTH2F, {axisPt, {500, -10, 10, "TRD Response, 10^{-4} [a.u.]"}});
+    histosTracks.add("tpcNClsCrossed", "Number Of TPC Clusters Crossed By Track", kTH1F, {{160, 0, 160, "Number of Crossed TPC Clusters"}});
+    histosTracks.add("TOFbeta", "TOF #beta", kTH2F, {axisPt, {1000, -5, 5, "TOF #beta"}});
   }
 
   void processCollisions(filteredCollision const& collision, filteredTracks const& tracks) {
@@ -119,8 +121,10 @@ struct AnalysisExample {
       printf("Process track within collision\n");
       histosTracks.fill(HIST("etaVsPhi"), track.eta(), track.phi());
       histosTracks.fill(HIST("TPCresponse"), track.p(), track.tpcSignal());
-      histosTracks.fill(HIST("TRDresponse"), track.p(), track.trdSignal());
+      if (track.tofSignal() != -999) histosTracks.fill(HIST("TOFresponse"), track.p(), track.tofSignal()/1.e6);
+      if (track.trdSignal() != -999) histosTracks.fill(HIST("TRDresponse"), track.p(), track.trdSignal());
       histosTracks.fill(HIST("tpcNClsCrossed"), track.tpcNClsCrossedRows());
+      histosTracks.fill(HIST("TOFbeta"), track.p(), track.beta());
       if (abs(track.tpcNSigmaPi()) < 3.0f) histosTracks.fill(HIST("pionResponse"), track.p(), track.tpcSignal());
     }
   }
@@ -138,13 +142,18 @@ void processVerteces(filteredCollision const& collision, filteredV0s const& vert
 
       float const tpcNposSigmaPi = posDaughterTrack.tpcNSigmaPi();
       float const tpcNnegSigmaPi = negDaughterTrack.tpcNSigmaPi();
-      histosDecayVertex.fill(HIST("v0PosNsigmaPi"), tpcNposSigmaPi);
-      histosDecayVertex.fill(HIST("v0NegNsigmaPi"), tpcNnegSigmaPi);
+      histosDecayVertex.fill(HIST("v0PosNTPCsigmaPi"), tpcNposSigmaPi);
+      histosDecayVertex.fill(HIST("v0NegNTPCsigmaPi"), tpcNnegSigmaPi);
+
+      float const tofNposSigmaEl = posDaughterTrack.tofNSigmaEl();
+      float const tofNnegSigmaEl = negDaughterTrack.tofNSigmaEl();
+      histosDecayVertex.fill(HIST("v0PosNTOFsigmaEl"), tofNposSigmaEl);
+      histosDecayVertex.fill(HIST("v0NegNTOFsigmaEl"), tofNnegSigmaEl);
       histosDecayVertex.fill(HIST("ArmenterosPodolanskiPlot"), vertex.alpha(), vertex.qtarm());
 
       if (vertex.has_mcParticle()) {
         auto const& v0mcParticle = vertex.mcParticle();
-              histosMC.fill(HIST("mcV0Energy"), v0mcParticle.e());
+        histosMC.fill(HIST("mcV0Energy"), v0mcParticle.e());
       }
     }   
   }
